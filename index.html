@@ -1736,6 +1736,20 @@ function dedupeEvalFields(){
     const els=document.querySelectorAll('#'+id);
     if(els.length>1){for(let i=1;i<els.length;i++)els[i].closest('.fg')?.remove();}
   });
+  // força % tickets avaliados apenas em Métricas de Performance
+  const avp=document.getElementById('f-avp');
+  const metrics=document.querySelector('#pg-lancar .fcard:nth-of-type(3) .g4');
+  if(avp&&metrics){
+    const fg=avp.closest('.fg');
+    if(fg&&!metrics.contains(fg)){
+      const notaFg=metrics.querySelector('.fg');
+      if(notaFg&&notaFg.nextSibling)metrics.insertBefore(fg,notaFg.nextSibling);
+      else metrics.appendChild(fg);
+    }
+  }
+  // remove qualquer campo órfão com placeholder Ex:42 na seção individual
+  const indiv=document.querySelectorAll('#pg-lancar .fcard')[1];
+  if(indiv){indiv.querySelectorAll('input[placeholder="Ex: 42"]').forEach(el=>{if(el.id!=='f-avp')el.closest('.fg')?.remove();});}
 }
 
 function renderAll(){dedupeEvalFields();updSels();renderExec();renderHist();}
