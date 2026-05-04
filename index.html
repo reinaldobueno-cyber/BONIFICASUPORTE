@@ -552,6 +552,16 @@ button,input,select,textarea{font-family:var(--f)}
         <span class="hint" id="h-nota"></span>
       </div>
       <div class="fg">
+        <label>% tickets avaliados (colaborador)</label>
+        <input type="number" id="f-avp" placeholder="Ex: 42" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avp"></span>
+      </div>
+      <div class="fg">
+        <label>% média do time (mín. referência 45%)</label>
+        <input type="number" id="f-avm" placeholder="Ex: 51" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avm"></span>
+      </div>
+      <div class="fg">
         <label>Volume colaborador <button class="hbtn" onclick="showTip('tip-vol')">?</button></label>
         <input type="number" id="f-vol" placeholder="Atendimentos do agente" min="0" oninput="calc()">
         <div class="htip" id="tip-vol"><strong>Volume de Atendimentos</strong><span class="tag ttf">Fixo 30%</span><br>Total de atendimentos realizados pelo colaborador no mês.<ul><li>Meta = (Volume Total do Grupo ÷ Nº Agentes do Grupo) ÷ Dias Úteis × Dias Trabalhados</li><li>Ex Infra: 240 ÷ 4 ÷ 22 × 21 = 57,3 → meta proporcional</li><li>≥ 100% meta → R$135 | ≥ 80% → R$108 | &lt; 80% → R$81</li></ul></div>
@@ -804,12 +814,19 @@ function calcBonus(a){
   const rows=[];let sub=0;
   const row=(l,v,f,t)=>rows.push({l,v,f:f||'',t:t||'n'});
 
-  // NOTA
-  let nv=0,nf='';
-  if(nota>=9.5){nv=180;nf='≥ 9,50 → 100% = R$180';}
-  else if(nota>=9.2){nv=144;nf='≥ 9,20 → 80% = R$144';}
-  else if(nota>=9.0){nv=108;nf='≥ 9,00 → 60% = R$108';}
-  else{nv=0;nf='< 9,00 → 0%';}
+  // NOTA + GATE DE VOLUME DE AVALIAÇÕES
+  let nvBase=0,nf='';
+  if(nota>=9.85){nvBase=180;nf='≥ 9,85 → base R$180';}
+  else if(nota>=9.7){nvBase=144;nf='≥ 9,70 → base R$144';}
+  else if(nota>=9.2){nvBase=108;nf='≥ 9,20 → base R$108';}
+  else{nvBase=0;nf='< 9,20 → base R$0';}
+  const refAval=Math.max(45,Number(a.avalTeam)||0);
+  const pctAval=Number(a.avalPct)||0;
+  let fatorAval=1,faixaAval='≥ média';
+  if(pctAval<35){fatorAval=0;faixaAval='<35%';}
+  else if(pctAval<refAval){fatorAval=0.5;faixaAval=`35%–${refAval.toFixed(1)}%`; }
+  const nv=Math.round(nvBase*fatorAval*100)/100;
+  nf+=` | Avaliações ${pctAval.toFixed(1)}% (${faixaAval}) → ${fatorAval===1?'100%':fatorAval===0.5?'50%':'0%'} da nota`;
   sub+=nv;row('Nota de Satisfação',nv,nf);
 
   // VOLUME — meta = (vol_grupo / n_agentes / dias_uteis) * dias_trabalhados
@@ -953,6 +970,7 @@ function getFormData(){
   return{
     equipe:eq,
     nota:gf('f-nota'),volume:gi('f-vol'),
+    avalPct:gfn('f-avp'),avalTeam:gfn('f-avm'),
     metaVol:metaVol,  // pre-calculated meta for this agent
     vtGrp,nagGrp,     // stored for display in preview
     demandas:demRaw===''?0:Math.max(0,parseInt(demRaw)||0),
@@ -988,7 +1006,11 @@ function calc(){
 
   const nota=gf('f-nota');
   const hn=document.getElementById('h-nota');
-  if(nota){const f=nota>=9.5?'≥9,5 → R$180':nota>=9.2?'≥9,2 → R$144':nota>=9.0?'≥9,0 → R$108':'<9,0 → R$0';const cls=nota>=9.0?'hok':'herr';hn.textContent=f;hn.className='hint '+cls;}
+  if(nota){const f=nota>=9.85?'≥9,85 → base R$180':nota>=9.7?'≥9,7 → base R$144':nota>=9.2?'≥9,2 → base R$108':'<9,2 → base R$0';const cls=nota>=9.2?'hok':'herr';hn.textContent=f;hn.className='hint '+cls;}
+  const avp=gfn('f-avp'),avm=Math.max(45,gfn('f-avm'));
+  const havp=document.getElementById('h-avp'); const havm=document.getElementById('h-avm');
+  if(havm) {havm.textContent=`Referência aplicada: ${avm.toFixed(1)}%`; havm.className='hint hmut';}
+  if(havp&&avp){havp.textContent=avp<35?'<35%: zera nota':avp<avm?`Entre 35% e ${avm.toFixed(1)}%: 50% da nota`:'≥ média: 100% da nota';havp.className='hint '+(avp<35?'herr':avp<avm?'hwarn':'hok');}
 
   // Volume hint: shows calculated meta for this agent
   const vol=gi('f-vol');
@@ -1096,7 +1118,7 @@ function saveAg(){
 }
 
 function clrFields(){
-  ['f-nota','f-vol','f-dem','f-ati','f-dt','f-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nota','f-vol','f-dem','f-ati','f-dt','f-obs','f-avp','f-avm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   // Note: f-du, f-vt-sup, f-vt-inf, f-nag-sup, f-nag-inf are month-level — keep them across agents
   ['f-up','f-dia'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   ['f-extra','f-equipe-extra'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
@@ -1127,6 +1149,8 @@ function editAg(mes,id){
   document.getElementById('f-equipe').value=a.equipe||getEq(a.nome)||'';
   document.getElementById('f-nota').value=a.nota||'';
   document.getElementById('f-vol').value=a.volume||'';
+  document.getElementById('f-avp').value=a.avalPct||'';
+  document.getElementById('f-avm').value=a.avalTeam||'';
   document.getElementById('f-dem').value=a.demandas!=null?a.demandas:'';
   document.getElementById('f-ati').value=a.atividades||'';
   document.getElementById('f-dt').value=a.diasTrab||'';
