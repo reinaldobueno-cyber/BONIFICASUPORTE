@@ -558,8 +558,18 @@ button,input,select,textarea{font-family:var(--f)}
       <div class="fg">
         <label>Nota satisfação (0–10) <button class="hbtn" onclick="showTip('tip-nota')">?</button></label>
         <input type="number" id="f-nota" placeholder="Ex: 9.92" step="0.01" min="0" max="10" oninput="calc()">
-        <div class="htip" id="tip-nota"><strong>Nota de Satisfação</strong><span class="tag ttf">Fixo 40%</span><br>Média das avaliações dos clientes atendidos. Indicador individual.<ul><li>≥ 9,85 → 100% = R$180</li><li>≥ 9,70 → 80% = R$144</li><li>≥ 9,20 → 60% = R$108</li><li>< 9,20 → 0%</li></ul><em>Exemplo: 9,92 → faixa ≥9,85 → R$180,00</em></div>
+        <div class="htip" id="tip-nota"><strong>Nota de Satisfação</strong><span class="tag ttf">Fixo 40%</span><br>Média das avaliações dos clientes atendidos. Indicador individual.<ul><li>≥ 9,50 → 100% = R$180</li><li>≥ 9,20 → 80% = R$144</li><li>≥ 9,00 → 60% = R$108</li><li>< 9,00 → 0%</li></ul><em>Exemplo: 9,92 → faixa ≥9,50 → R$180,00</em></div>
         <span class="hint" id="h-nota"></span>
+      </div>
+      <div class="fg">
+        <label>% tickets avaliados (colaborador)</label>
+        <input type="number" id="f-avp" placeholder="Ex: 42" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avp"></span>
+      </div>
+      <div class="fg">
+        <label>% média do time (mín. referência 45%)</label>
+        <input type="number" id="f-avm" placeholder="Ex: 51" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avm"></span>
       </div>
       <div class="fg">
         <label>Volume colaborador <button class="hbtn" onclick="showTip('tip-vol')">?</button></label>
@@ -662,7 +672,7 @@ button,input,select,textarea{font-family:var(--f)}
       <div class="mblk-body" id="mmb0">
         <p style="font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:10px">O fechamento apura a bonificação individual com teto de <strong>R$450,00 fixo + adicionais</strong>. A política vigente (desde Dez/2025) distribui: Nota 40%, Volume 30%, Demandas 10%, Atividades 20%.</p>
         <div class="g2" style="gap:10px">
-          <div style="font-size:12px;color:var(--ink3);line-height:1.6"><strong style="color:var(--g1)">Nota de Satisfação (R$180 max)</strong><br>≥9,85→R$180 · ≥9,7→R$144 · ≥9,2→R$108 · &lt;9,2→R$0</div>
+          <div style="font-size:12px;color:var(--ink3);line-height:1.6"><strong style="color:var(--g1)">Nota de Satisfação (R$180 max)</strong><br>≥9,5→R$180 · ≥9,2→R$144 · ≥9,0→R$108 · &lt;9,0→R$0</div>
           <div style="font-size:12px;color:var(--ink3);line-height:1.6"><strong style="color:var(--g1)">Volume (R$135 max)</strong><br>≥100% meta→R$135 · ≥80%→R$108 · &lt;80%→R$81</div>
           <div style="font-size:12px;color:var(--ink3);line-height:1.6"><strong style="color:var(--g1)">Demandas — Suporte (R$45 max)</strong><br>0→R$45 · 1→R$27 · ≥2→R$0</div>
           <div style="font-size:12px;color:var(--ink3);line-height:1.6"><strong style="color:var(--g1)">Atividades Extras — progressivo</strong><br>≥200pts→progressivo · ≥150→R$72 · ≥100→R$54<br><em style="font-size:11px">Ex: 540pts = 270%×R$90 = R$151,20</em></div>
@@ -725,7 +735,7 @@ button,input,select,textarea{font-family:var(--f)}
   <div class="mblk">
     <div class="mblk-h" onclick="togManual('mb1')"><div class="mblk-t">📊 Indicadores — Núcleo Reprodução e Engorda</div><span>▼</span></div>
     <div class="mblk-body" id="mb1">
-      <div class="mcard"><div class="mcard-n">Nota de Satisfação <span class="tt ttf">Fixo 40%</span></div><table class="ftable"><thead><tr><th>Faixa</th><th>%</th><th>Valor</th></tr></thead><tbody><tr><td>≥ 9,85</td><td>100%</td><td>R$180,00</td></tr><tr><td>≥ 9,70 e &lt; 9,85</td><td>80%</td><td>R$144,00</td></tr><tr><td>≥ 9,20 e &lt; 9,70</td><td>60%</td><td>R$108,00</td></tr><tr><td>&lt; 9,20</td><td>0%</td><td>R$0,00</td></tr></tbody></table></div>
+      <div class="mcard"><div class="mcard-n">Nota de Satisfação <span class="tt ttf">Fixo 40%</span></div><table class="ftable"><thead><tr><th>Faixa</th><th>%</th><th>Valor</th></tr></thead><tbody><tr><td>≥ 9,50</td><td>100%</td><td>R$180,00</td></tr><tr><td>≥ 9,20 e &lt; 9,50</td><td>80%</td><td>R$144,00</td></tr><tr><td>≥ 9,00 e &lt; 9,20</td><td>60%</td><td>R$108,00</td></tr><tr><td>&lt; 9,00</td><td>0%</td><td>R$0,00</td></tr></tbody></table></div>
       <div class="mcard"><div class="mcard-n">Volume de Atendimentos <span class="tt ttf">Fixo 30%</span></div><div style="font-size:12px;color:var(--ink3);margin-bottom:8px">Meta individual = (Volume Total do Time / Dias Úteis) × Dias Trabalhados</div><table class="ftable"><thead><tr><th>% da Meta</th><th>Valor</th></tr></thead><tbody><tr><td>≥ 100%</td><td>R$135,00</td></tr><tr><td>≥ 80%</td><td>R$108,00</td></tr><tr><td>&lt; 80%</td><td>R$81,00</td></tr></tbody></table></div>
       <div class="mcard"><div class="mcard-n">Demandas Indevidas <span class="tt ttf">Fixo 10%</span></div><table class="ftable"><thead><tr><th>Demandas</th><th>Valor</th></tr></thead><tbody><tr><td>0</td><td>R$45,00</td></tr><tr><td>1</td><td>R$27,00</td></tr><tr><td>≥ 2</td><td>R$0,00</td></tr></tbody></table></div>
       <div class="mcard"><div class="mcard-n">Atividades Extras <span class="tt ttv">Variável 20%</span></div><table class="ftable"><thead><tr><th>Pontos</th><th>Resultado</th><th>Valor</th></tr></thead><tbody><tr><td>≥ 200 (progressivo)</td><td>pts/200 × 100%</td><td>≥ R$90,00</td></tr><tr><td>≥ 150</td><td>80%</td><td>R$72,00</td></tr><tr><td>≥ 100</td><td>60%</td><td>R$54,00</td></tr><tr><td>&lt; 100</td><td>proporcional</td><td>—</td></tr></tbody></table><div style="font-size:11px;color:var(--ink4);margin-top:8px">📌 Exemplo: 540 pts = 270% × R$90 = R$151,20</div></div>
