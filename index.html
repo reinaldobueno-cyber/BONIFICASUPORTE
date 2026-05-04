@@ -450,6 +450,11 @@ button,input,select,textarea{font-family:var(--f)}
         <div class="htip" id="tip-du"><strong>Dias Úteis no Mês</strong>Total de dias úteis. Usado para calcular a proporcionalidade de quem não trabalhou o mês inteiro.</div>
         <span class="hint hmut" id="h-du"></span>
       </div>
+      <div class="fg">
+        <label>% média do time (mín. referência 45%)</label>
+        <input type="number" id="f-avm" placeholder="Ex: 51" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avm"></span>
+      </div>
     </div>
     <div class="sep"></div>
     <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">
@@ -537,11 +542,6 @@ button,input,select,textarea{font-family:var(--f)}
         <input type="number" id="f-dt" placeholder="= dias úteis se mês integral" min="1" max="31" oninput="calc()">
         <div class="htip" id="tip-dt"><strong>Dias Trabalhados</strong>Dias efetivos do colaborador no mês.<ul><li>Mês integral: igual aos dias úteis</li><li>5 dias de férias, 22 dias úteis → informar 17</li><li>Novo colaborador: dias desde a admissão</li></ul></div>
         <span class="hint" id="h-dt"></span>
-      </div>
-      <div class="fg">
-        <label>% média do time (mín. referência 45%)</label>
-        <input type="number" id="f-avm" placeholder="Ex: 51" step="0.1" min="0" max="100" oninput="calc()">
-        <span class="hint" id="h-avm"></span>
       </div>
       <div class="fg">
         <label>% tickets avaliados (colaborador)</label>
