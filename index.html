@@ -358,7 +358,7 @@ button,input,select,textarea{font-family:var(--f)}
     <div class="ph-l"><div class="pt">Visão Executiva</div><div class="ps">Leitura gerencial — insights dinâmicos e validação de fechamento</div></div>
     <div class="ph-r">
       <div class="sw"><select id="sel-exec" onchange="renderExec()"></select></div>
-      <button class="btn bs bsm" onclick="gerarPDF()">🖨 PDF</button>
+      <button class="btn bs bsm" onclick="gerarPDF('exec')">🖨 PDF</button>
     </div>
   </div>
 
@@ -566,7 +566,7 @@ button,input,select,textarea{font-family:var(--f)}
       <div class="fg">
         <label>Atividades (pontos) <button class="hbtn" onclick="showTip('tip-ati')">?</button></label>
         <input type="number" id="f-ati" placeholder="Ex: 160" min="0" oninput="calc()">
-        <div class="htip" id="tip-ati"><strong>Atividades Extras</strong><span class="tag ttv">Variável 20%</span><br>Pontuação de atividades adicionais. Fórmula linear contínua entre faixas.<ul><li>≥ 200 pts → progressivo: pts÷200 × R$90 (ex: 310pts = 155% × R$90 = R$139,50)</li><li>150–199 pts → 80%→100% linear (ex: 175pts = 90% × R$90 = R$81,00)</li><li>100–149 pts → 60%→80% linear (ex: 120pts = 68% × R$90 = R$61,20)</li><li>&lt; 100 pts → R$0,00</li><li>Infra: mesmo cálculo com máximo R$135</li></ul></div>
+        <div class="htip" id="tip-ati"><strong>Atividades Extras</strong><span class="tag ttv">Variável 20%</span><br>Pontuação de atividades adicionais. Regra: SE(pts<100;0;SE(pts<150;54;SE(pts<200;90;90+((pts-200)*18/100)))) para base R$90.<ul><li>&lt;100 pts → R$0</li><li>100–149 → R$54 fixo (60%)</li><li>150–199 → R$90 fixo (100%)</li><li>≥200 → R$90 + ((pts-200)*18/100)</li><li>Infra escala proporcionalmente para base R$135</li></ul></div>
         <span class="hint" id="h-ati"></span>
       </div>
     </div>
@@ -687,7 +687,7 @@ button,input,select,textarea{font-family:var(--f)}
     <div class="fh">Selecionar mês</div>
     <div class="fg"><select id="sel-exp"></select></div>
   </div>
-  <div class="exp-item" onclick="gerarPDF()"><div class="exp-icon">📄</div><div class="exp-t"><h4>Versão completa — PDF Gerencial</h4><p>Resumo executivo, equipes, individuais, observações e validação</p></div><div class="exp-a"><button class="btn bp bsm" onclick="gerarPDF();event.stopPropagation()">Gerar PDF</button></div></div>
+  <div class="exp-item" onclick="gerarPDF('exp')"><div class="exp-icon">📄</div><div class="exp-t"><h4>Versão completa — PDF Gerencial</h4><p>Resumo executivo, equipes, individuais, observações e validação</p></div><div class="exp-a"><button class="btn bp bsm" onclick="gerarPDF('exp');event.stopPropagation()">Gerar PDF</button></div></div>
   <div class="exp-item" onclick="window.print()"><div class="exp-icon">🖨</div><div class="exp-t"><h4>Imprimir relatório</h4><p>Ctrl+P para imprimir ou salvar como PDF do navegador</p></div><div class="exp-a"><button class="btn bs bsm" onclick="window.print();event.stopPropagation()">Imprimir</button></div></div>
   <div class="exp-item" onclick="expCSV()"><div class="exp-icon">📊</div><div class="exp-t"><h4>Exportar CSV</h4><p>Para Excel ou Google Sheets</p></div><div class="exp-a"><button class="btn bs bsm" onclick="expCSV();event.stopPropagation()">Baixar CSV</button></div></div>
   <div class="exp-item" onclick="expJSON()"><div class="exp-icon">💾</div><div class="exp-t"><h4>Backup JSON</h4><p>Salvar todos os dados para restauração</p></div><div class="exp-a"><button class="btn bs bsm" onclick="expJSON();event.stopPropagation()">Baixar</button></div></div>
@@ -813,16 +813,17 @@ function calcBonus(a){
   sub+=nv;row('Nota de Satisfação',nv,nf);
 
   // VOLUME — meta = (vol_grupo / n_agentes / dias_uteis) * dias_trabalhados
-  const pv=metaVol>0?volume/metaVol:(volume>0?1.2:0);
+  const pv=metaVol>0?volume/metaVol:0;
   const pvPct=Math.round(pv*100);
   const metaRnd=Math.round(metaVol*10)/10;
+  const t10=metaVol*0.9,t15=metaVol*0.85,t20=metaVol*0.8,t30=metaVol*0.7,t40=metaVol*0.6,t50=metaVol*0.5;
   let vv=0,vf='';
-  if(pv>=0.9){vv=135;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → R$135`; }
-  else if(pv>=0.85){vv=108;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → R$108`; }
-  else if(pv>=0.8){vv=81;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → R$81`; }
-  else if(pv>=0.7){vv=-40.5;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → -R$40,50`; }
-  else if(pv>=0.6){vv=-67.5;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → -R$67,50`; }
-  else{vv=-135;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → -R$135`; }
+  if(volume>=t10){vv=135;vf=`Vol. ${volume} na faixa 10% (${t10.toFixed(1)}–${metaRnd.toFixed(1)}) → R$135`;}
+  else if(volume>=t15){vv=108;vf=`Vol. ${volume} na faixa 15% (${t15.toFixed(1)}–${t10.toFixed(1)}) → R$108`;}
+  else if(volume>=t20){vv=81;vf=`Vol. ${volume} na faixa 20% (${t20.toFixed(1)}–${t15.toFixed(1)}) → R$81`;}
+  else if(volume>=t30){vv=-40.5;vf=`Vol. ${volume} na faixa 30% (${t30.toFixed(1)}–${t20.toFixed(1)}) → -R$40,50`;}
+  else if(volume>=t40){vv=-67.5;vf=`Vol. ${volume} na faixa 40% (${t40.toFixed(1)}–${t30.toFixed(1)}) → -R$67,50`;}
+  else{vv=-135;vf=`Vol. ${volume} abaixo da faixa 50% (<${t50.toFixed(1)}) → -R$135`;}
   sub+=vv;row('Volume',vv,vf);
 
   // DEMANDAS (só suporte)
@@ -834,14 +835,23 @@ function calcBonus(a){
     sub+=dv;row('Demandas Indevidas',dv,df);
   }
 
-  // ATIVIDADES — regra da planilha
+  // ATIVIDADES — regra fixa por faixa + progressivo pós-200
   // =SE(pts<100;0;SE(pts<150;54;SE(pts<200;90;90+((pts-200)*18/100))))
   const maxAt=isInfra?135:90;
   let av=0,af='';
-  if(atividades<100){av=0;af=`${atividades} pts <100 → R$0`; }
-  else if(atividades<150){av=Math.round(maxAt*0.6*100)/100;af=`${atividades} pts (100–149) → 60% = R$${av.toFixed(2)}`; }
-  else if(atividades<200){av=maxAt;af=`${atividades} pts (150–199) → 100% = R$${av.toFixed(2)}`; }
-  else{av=Math.round((maxAt+((atividades-200)*(0.2*maxAt)/100))*100)/100;af=`${atividades} pts (>=200) → progressivo = R$${av.toFixed(2)}`; }
+  if(atividades<100){
+    av=0;
+    af=atividades>0?`${atividades} pts < 100 → R$0`:'0 pts → R$0';
+  } else if(atividades<150){
+    av=Math.round((maxAt*0.6)*100)/100;
+    af=`${atividades} pts (100–149) → R$${av.toFixed(2)} fixo`;
+  } else if(atividades<200){
+    av=maxAt;
+    af=`${atividades} pts (150–199) → R$${av.toFixed(2)} fixo`;
+  } else {
+    av=Math.round((maxAt+((atividades-200)*(0.2*maxAt)/100))*100)/100;
+    af=`${atividades} pts (≥200) → R$${av.toFixed(2)} progressivo`;
+  }
   sub+=av;row('Atividades Extras',av,af);
 
 
@@ -1000,7 +1010,7 @@ function calc(){
     const metaProp=Math.round(metaIntegral/du*(dt||du)*10)/10;
     const pct=metaProp>0?Math.round(vol/metaProp*100):0;
     hv.textContent=`Meta: ${metaProp} → você tem ${vol} (${pct}%)`;
-    hv.className='hint '+(pct>=100?'hok':pct>=80?'hwarn':'herr');
+    hv.className='hint '+(pct>=90?'hok':pct>=80?'hwarn':'herr');
   } else if(vol>0&&!(vtH>0&&nagRaw>0)){
     hv.textContent='Preencha Volume do grupo e Nº de agentes para ver a meta';
     hv.className='hint hwarn';
@@ -1014,9 +1024,9 @@ function calc(){
   if(ati>0){
     const mx=a.equipe==='i'?135:90;
     let htext='';
-    if(ati>=200){htext=ati+' pts → R$ '+((ati/200)*mx).toFixed(2)+' (progressivo)';}
-    else if(ati>=150){const p=0.8+((ati-150)/50)*0.2;htext=ati+' pts → '+(p*100).toFixed(1)+'% = R$ '+(p*mx).toFixed(2);}
-    else if(ati>=100){const p=0.6+((ati-100)/50)*0.2;htext=ati+' pts → '+(p*100).toFixed(1)+'% = R$ '+(p*mx).toFixed(2);}
+    if(ati>=200){htext=ati+' pts → R$ '+(mx+((ati-200)*(0.2*mx)/100)).toFixed(2)+' (progressivo)';}
+    else if(ati>=150){htext=ati+' pts → R$ '+mx.toFixed(2)+' fixo';}
+    else if(ati>=100){htext=ati+' pts → R$ '+(mx*0.6).toFixed(2)+' fixo';}
     else{htext=ati+' pts < 100 → R$0';}
     ha.textContent=htext;ha.className='hint hmut';
   }
@@ -1466,8 +1476,8 @@ function togManual(id){document.getElementById(id).classList.toggle('open');}
 // ════════════════════════════════════════════════════
 // PDF
 // ════════════════════════════════════════════════════
-function gerarPDF(){
-  const mes=gv('sel-exp')||gv('sel-exec')||months().pop();
+function gerarPDF(origem='auto'){
+  const mes=origem==='exp'?(gv('sel-exp')||gv('sel-exec')||months().pop()):origem==='exec'?(gv('sel-exec')||gv('sel-exp')||months().pop()):(gv('sel-exp')||gv('sel-exec')||months().pop());
   if(!mes||!DB.months[mes]){toast('Selecione um mês para gerar o PDF.',true);return;}
   const m=DB.months[mes];
   const ags=[...m.agents].sort((a,b)=>b.total-a.total);
