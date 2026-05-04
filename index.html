@@ -1098,6 +1098,8 @@ function syncMes(){
   const mes=gv('f-mes');
   document.getElementById('cur-mes-lbl').textContent=ML(mes);
   document.getElementById('hdr-mes').textContent=ML(mes)||'—';
+  const avm=document.getElementById('f-avm');
+  if(avm&&mes&&DB.months[mes]?.avgAval){avm.value=DB.months[mes].avgAval;}
   renderCurList();
 }
 
@@ -1121,6 +1123,7 @@ function saveAg(){
   const{rows,total}=calcBonus(a);
   a.total=total;a.breakdown=rows;a.equipe=fd.equipe||getEq(nome);
   if(!DB.months[mes])DB.months[mes]={agents:[],total:0};
+  if(fd.avalTeam>0)DB.months[mes].avgAval=fd.avalTeam;
   DB.months[mes].agents.push(a);
   DB.months[mes].total=Math.round(DB.months[mes].agents.reduce((s,x)=>s+x.total,0)*100)/100;
   save();toast(`${nome} salvo — ${R(total)}`);
@@ -1128,7 +1131,7 @@ function saveAg(){
 }
 
 function clrFields(){
-  ['f-nota','f-vol','f-dem','f-ati','f-dt','f-obs','f-avp','f-avm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nota','f-vol','f-dem','f-ati','f-dt','f-obs','f-avp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   // Note: f-du, f-vt-sup, f-vt-inf, f-nag-sup, f-nag-inf are month-level — keep them across agents
   ['f-up','f-dia'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   ['f-extra','f-equipe-extra'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
