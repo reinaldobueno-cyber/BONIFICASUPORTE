@@ -567,11 +567,6 @@ button,input,select,textarea{font-family:var(--f)}
         <span class="hint" id="h-avp"></span>
       </div>
       <div class="fg">
-        <label>% média do time (mín. referência 45%)</label>
-        <input type="number" id="f-avm" placeholder="Ex: 51" step="0.1" min="0" max="100" oninput="calc()">
-        <span class="hint" id="h-avm"></span>
-      </div>
-      <div class="fg">
         <label>Volume colaborador <button class="hbtn" onclick="showTip('tip-vol')">?</button></label>
         <input type="number" id="f-vol" placeholder="Atendimentos do agente" min="0" oninput="calc()">
         <div class="htip" id="tip-vol"><strong>Volume de Atendimentos</strong><span class="tag ttf">Fixo 30%</span><br>Total de atendimentos realizados pelo colaborador no mês.<ul><li>Meta = (Volume Total do Grupo ÷ Nº Agentes do Grupo) ÷ Dias Úteis × Dias Trabalhados</li><li>Ex Infra: 240 ÷ 4 ÷ 22 × 21 = 57,3 → meta proporcional</li><li>≥ 100% meta → R$135 | ≥ 80% → R$108 | &lt; 80% → R$81</li></ul></div>
