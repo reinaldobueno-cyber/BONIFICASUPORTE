@@ -855,11 +855,12 @@ function calcBonus(a){
   sub+=av;row('Atividades Extras',av,af);
 
 
-  // OVERRIDES MANUAIS
-  if(a.overrideNota!==null){sub+=a.overrideNota-nv;rows[0].v=a.overrideNota;rows[0].f='Ajuste manual';}
-  if(a.overrideVolume!==null){sub+=a.overrideVolume-vv;const i=rows.findIndex(r=>r.l==='Volume');if(i>-1){rows[i].v=a.overrideVolume;rows[i].f='Ajuste manual';}}
-  if(a.overrideDemandas!==null&&!isInfra){const i=rows.findIndex(r=>r.l==='Demandas Indevidas');if(i>-1){sub+=a.overrideDemandas-rows[i].v;rows[i].v=a.overrideDemandas;rows[i].f='Ajuste manual';}}
-  if(a.overrideAtividades!==null){const i=rows.findIndex(r=>r.l==='Atividades Extras');if(i>-1){sub+=a.overrideAtividades-rows[i].v;rows[i].v=a.overrideAtividades;rows[i].f='Ajuste manual';}}
+  // OVERRIDES MANUAIS (substituem o valor da métrica, não somam por fora)
+  if(a.overrideNota!==null){const i=rows.findIndex(r=>r.l==='Nota de Satisfação');if(i>-1){rows[i].v=a.overrideNota;rows[i].f='Ajuste manual';}}
+  if(a.overrideVolume!==null){const i=rows.findIndex(r=>r.l==='Volume');if(i>-1){rows[i].v=a.overrideVolume;rows[i].f='Ajuste manual';}}
+  if(a.overrideDemandas!==null&&!isInfra){const i=rows.findIndex(r=>r.l==='Demandas Indevidas');if(i>-1){rows[i].v=a.overrideDemandas;rows[i].f='Ajuste manual';}}
+  if(a.overrideAtividades!==null){const i=rows.findIndex(r=>r.l==='Atividades Extras');if(i>-1){rows[i].v=a.overrideAtividades;rows[i].f='Ajuste manual';}}
+  sub=Math.round(rows.reduce((acc,r)=>acc+(Number(r.v)||0),0)*100)/100;
 
   // ADICIONAIS
   if(metaTME){sub+=50;row('Meta TME zero',50,'+R$50','bon');}
