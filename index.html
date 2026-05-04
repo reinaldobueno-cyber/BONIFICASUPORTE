@@ -358,11 +358,16 @@ button,input,select,textarea{font-family:var(--f)}
     <div class="ph-l"><div class="pt">Visão Executiva</div><div class="ps">Leitura gerencial — insights dinâmicos e validação de fechamento</div></div>
     <div class="ph-r">
       <div class="sw"><select id="sel-exec" onchange="renderExec()"></select></div>
-      <button class="btn bs bsm" onclick="gerarPDF()">🖨 PDF</button>
+      <button class="btn bs bsm" onclick="gerarPDF('exec')">🖨 PDF</button>
     </div>
   </div>
 
   <div id="exec-alerts"></div>
+
+  <div class="card mb14">
+    <div class="ch"><div class="ct">Análise de divergências em regras de cálculo</div><div class="cb" id="disc-count">0 itens</div></div>
+    <div id="exec-disc"></div>
+  </div>
 
   <div class="kpis">
     <div class="kpi"><div class="kl">Total do Mês</div><div class="kv" id="e-tot">—</div><div class="ks" id="e-tot-s">—</div><div class="ki">💰</div></div>
@@ -444,6 +449,11 @@ button,input,select,textarea{font-family:var(--f)}
         <input type="number" id="f-du" placeholder="Ex: 22" min="1" max="31" oninput="calc()">
         <div class="htip" id="tip-du"><strong>Dias Úteis no Mês</strong>Total de dias úteis. Usado para calcular a proporcionalidade de quem não trabalhou o mês inteiro.</div>
         <span class="hint hmut" id="h-du"></span>
+      </div>
+      <div class="fg">
+        <label>% média do time (mín. referência 45%)</label>
+        <input type="number" id="f-avm" placeholder="Ex: 51" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avm"></span>
       </div>
     </div>
     <div class="sep"></div>
@@ -547,6 +557,11 @@ button,input,select,textarea{font-family:var(--f)}
         <span class="hint" id="h-nota"></span>
       </div>
       <div class="fg">
+        <label>% tickets avaliados (colaborador)</label>
+        <input type="number" id="f-avp" placeholder="Ex: 42" step="0.1" min="0" max="100" oninput="calc()">
+        <span class="hint" id="h-avp"></span>
+      </div>
+      <div class="fg">
         <label>Volume colaborador <button class="hbtn" onclick="showTip('tip-vol')">?</button></label>
         <input type="number" id="f-vol" placeholder="Atendimentos do agente" min="0" oninput="calc()">
         <div class="htip" id="tip-vol"><strong>Volume de Atendimentos</strong><span class="tag ttf">Fixo 30%</span><br>Total de atendimentos realizados pelo colaborador no mês.<ul><li>Meta = (Volume Total do Grupo ÷ Nº Agentes do Grupo) ÷ Dias Úteis × Dias Trabalhados</li><li>Ex Infra: 240 ÷ 4 ÷ 22 × 21 = 57,3 → meta proporcional</li><li>≥ 100% meta → R$135 | ≥ 80% → R$108 | &lt; 80% → R$81</li></ul></div>
@@ -561,10 +576,20 @@ button,input,select,textarea{font-family:var(--f)}
       <div class="fg">
         <label>Atividades (pontos) <button class="hbtn" onclick="showTip('tip-ati')">?</button></label>
         <input type="number" id="f-ati" placeholder="Ex: 160" min="0" oninput="calc()">
-        <div class="htip" id="tip-ati"><strong>Atividades Extras</strong><span class="tag ttv">Variável 20%</span><br>Pontuação de atividades adicionais. Fórmula linear contínua entre faixas.<ul><li>≥ 200 pts → progressivo: pts÷200 × R$90 (ex: 310pts = 155% × R$90 = R$139,50)</li><li>150–199 pts → 80%→100% linear (ex: 175pts = 90% × R$90 = R$81,00)</li><li>100–149 pts → 60%→80% linear (ex: 120pts = 68% × R$90 = R$61,20)</li><li>&lt; 100 pts → R$0,00</li><li>Infra: mesmo cálculo com máximo R$135</li></ul></div>
+        <div class="htip" id="tip-ati"><strong>Atividades Extras</strong><span class="tag ttv">Variável 20%</span><br>Pontuação de atividades adicionais. Regra: SE(pts<100;0;SE(pts<150;54;SE(pts<200;90;90+((pts-200)*18/100)))) para base R$90.<ul><li>&lt;100 pts → R$0</li><li>100–149 → R$54 fixo (60%)</li><li>150–199 → R$90 fixo (100%)</li><li>≥200 → R$90 + ((pts-200)*18/100)</li><li>Infra escala proporcionalmente para base R$135</li></ul></div>
         <span class="hint" id="h-ati"></span>
       </div>
     </div>
+  </div>
+  <div class="fcard">
+    <div class="fh">🛠 Ajustes manuais por meta (opcional)</div>
+    <div class="g4">
+      <div class="fg"><label>Override Nota (R$)</label><input type="number" id="f-ov-nota" step="0.01" placeholder="auto" oninput="calc()"></div>
+      <div class="fg"><label>Override Volume (R$)</label><input type="number" id="f-ov-vol" step="0.01" placeholder="auto" oninput="calc()"></div>
+      <div class="fg"><label>Override Demandas (R$)</label><input type="number" id="f-ov-dem" step="0.01" placeholder="auto" oninput="calc()"></div>
+      <div class="fg"><label>Override Atividades (R$)</label><input type="number" id="f-ov-ati" step="0.01" placeholder="auto" oninput="calc()"></div>
+    </div>
+    <div class="hint hmut" style="margin-top:8px">Se preencher, substitui o cálculo automático da meta correspondente.</div>
   </div>
 
   <!-- GANHOS EXTRAS -->
@@ -672,7 +697,7 @@ button,input,select,textarea{font-family:var(--f)}
     <div class="fh">Selecionar mês</div>
     <div class="fg"><select id="sel-exp"></select></div>
   </div>
-  <div class="exp-item" onclick="gerarPDF()"><div class="exp-icon">📄</div><div class="exp-t"><h4>Versão completa — PDF Gerencial</h4><p>Resumo executivo, equipes, individuais, observações e validação</p></div><div class="exp-a"><button class="btn bp bsm" onclick="gerarPDF();event.stopPropagation()">Gerar PDF</button></div></div>
+  <div class="exp-item" onclick="gerarPDF('exp')"><div class="exp-icon">📄</div><div class="exp-t"><h4>Versão completa — PDF Gerencial</h4><p>Resumo executivo, equipes, individuais, observações e validação</p></div><div class="exp-a"><button class="btn bp bsm" onclick="gerarPDF('exp');event.stopPropagation()">Gerar PDF</button></div></div>
   <div class="exp-item" onclick="window.print()"><div class="exp-icon">🖨</div><div class="exp-t"><h4>Imprimir relatório</h4><p>Ctrl+P para imprimir ou salvar como PDF do navegador</p></div><div class="exp-a"><button class="btn bs bsm" onclick="window.print();event.stopPropagation()">Imprimir</button></div></div>
   <div class="exp-item" onclick="expCSV()"><div class="exp-icon">📊</div><div class="exp-t"><h4>Exportar CSV</h4><p>Para Excel ou Google Sheets</p></div><div class="exp-a"><button class="btn bs bsm" onclick="expCSV();event.stopPropagation()">Baixar CSV</button></div></div>
   <div class="exp-item" onclick="expJSON()"><div class="exp-icon">💾</div><div class="exp-t"><h4>Backup JSON</h4><p>Salvar todos os dados para restauração</p></div><div class="exp-a"><button class="btn bs bsm" onclick="expJSON();event.stopPropagation()">Baixar</button></div></div>
@@ -784,28 +809,31 @@ const prevMes=ym=>{const ms=months();const i=ms.indexOf(ym);return i>0?ms[i-1]:n
 function calcBonus(a){
   const{equipe,nota,volume,metaVol,demandas,atividades,diasTrab,diasUteis,
         metaTME,madrinha,reconhece,upgrades,extra,equipeExtra,diarias}=a;
-  const prop=diasUteis>0?Math.min(diasTrab/diasUteis,1):1;
-  // metaVol is pre-calculated: (volGrupo / nAgentes / diasUteis) * diasTrab
+  // sem proporcional global no subtotal: proporcionalidade já aplicada na meta de volume
   const isInfra=equipe==='i';
   const rows=[];let sub=0;
   const row=(l,v,f,t)=>rows.push({l,v,f:f||'',t:t||'n'});
 
-  // NOTA
+  // NOTA (regra oficial da planilha)
   let nv=0,nf='';
-  if(nota>=9.85){nv=180;nf='≥ 9,85 → 100% = R$180';}
-  else if(nota>=9.70){nv=144;nf='≥ 9,70 → 80% = R$144';}
-  else if(nota>=9.20){nv=108;nf='≥ 9,20 → 60% = R$108';}
-  else{nv=0;nf='< 9,20 → 0%';}
+  if(nota>=9.85){nv=180;nf='≥ 9,85 → R$180';}
+  else if(nota>=9.7){nv=144;nf='≥ 9,70 → R$144';}
+  else if(nota>=9.2){nv=108;nf='≥ 9,20 → R$108';}
+  else{nv=0;nf='< 9,20 → R$0';}
   sub+=nv;row('Nota de Satisfação',nv,nf);
 
   // VOLUME — meta = (vol_grupo / n_agentes / dias_uteis) * dias_trabalhados
-  const pv=metaVol>0?volume/metaVol:(volume>0?1.2:0);
+  const pv=metaVol>0?volume/metaVol:0;
   const pvPct=Math.round(pv*100);
   const metaRnd=Math.round(metaVol*10)/10;
+  const t10=metaVol*0.9,t15=metaVol*0.85,t20=metaVol*0.8,t30=metaVol*0.7,t40=metaVol*0.6,t50=metaVol*0.5;
   let vv=0,vf='';
-  if(pv>=1){vv=135;vf=`Vol. ${volume} ≥ meta ${metaRnd} (${pvPct}%) → R$135`;}
-  else if(pv>=0.8){vv=108;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → R$108`;}
-  else{vv=81;vf=`Vol. ${volume} = ${pvPct}% da meta ${metaRnd} → R$81`;}
+  if(volume>=t10){vv=135;vf=`Vol. ${volume} na faixa 10% (${t10.toFixed(1)}–${metaRnd.toFixed(1)}) → R$135`;}
+  else if(volume>=t15){vv=108;vf=`Vol. ${volume} na faixa 15% (${t15.toFixed(1)}–${t10.toFixed(1)}) → R$108`;}
+  else if(volume>=t20){vv=81;vf=`Vol. ${volume} na faixa 20% (${t20.toFixed(1)}–${t15.toFixed(1)}) → R$81`;}
+  else if(volume>=t30){vv=-40.5;vf=`Vol. ${volume} na faixa 30% (${t30.toFixed(1)}–${t20.toFixed(1)}) → -R$40,50`;}
+  else if(volume>=t40){vv=-67.5;vf=`Vol. ${volume} na faixa 40% (${t40.toFixed(1)}–${t30.toFixed(1)}) → -R$67,50`;}
+  else{vv=-135;vf=`Vol. ${volume} abaixo da faixa 50% (<${t50.toFixed(1)}) → -R$135`;}
   sub+=vv;row('Volume',vv,vf);
 
   // DEMANDAS (só suporte)
@@ -817,35 +845,35 @@ function calcBonus(a){
     sub+=dv;row('Demandas Indevidas',dv,df);
   }
 
-  // ATIVIDADES — fórmula linear contínua (exata da planilha)
-  // =SE(pts<100;0; SE(pts<150; 0.6+((pts-100)/50)*0.2;
-  //   SE(pts<200; 0.8+((pts-150)/50)*0.2; pts/200)))  × maxAt
+  // ATIVIDADES — regra fixa por faixa + progressivo pós-200
+  // =SE(pts<100;0;SE(pts<150;54;SE(pts<200;90;90+((pts-200)*18/100))))
   const maxAt=isInfra?135:90;
-  let av=0,af='',avPct=0;
-  if(atividades>=200){
-    avPct=atividades/200;
-    av=Math.round(avPct*maxAt*100)/100;
-    af=atividades+' pts → '+avPct.toFixed(2)+'× (progressivo) = R$'+av.toFixed(2);
-  } else if(atividades>=150){
-    avPct=0.8+((atividades-150)/50)*0.2;  // linear 80%→100%
-    av=Math.round(avPct*maxAt*100)/100;
-    af=atividades+' pts → '+(avPct*100).toFixed(1)+'% = R$'+av.toFixed(2);
-  } else if(atividades>=100){
-    avPct=0.6+((atividades-100)/50)*0.2;  // linear 60%→80%
-    av=Math.round(avPct*maxAt*100)/100;
-    af=atividades+' pts → '+(avPct*100).toFixed(1)+'% = R$'+av.toFixed(2);
-  } else {
+  let av=0,af='';
+  if(atividades<100){
     av=0;
-    af=atividades>0?(atividades+' pts < 100 → R$0'):'0 pts → R$0';
+    af=atividades>0?`${atividades} pts < 100 → R$0`:'0 pts → R$0';
+  } else if(atividades<150){
+    av=Math.round((maxAt*0.6)*100)/100;
+    af=`${atividades} pts (100–149) → R$${av.toFixed(2)} fixo`;
+  } else if(atividades<200){
+    av=maxAt;
+    af=`${atividades} pts (150–199) → R$${av.toFixed(2)} fixo`;
+  } else {
+    av=Math.round((maxAt+((atividades-200)*(0.2*maxAt)/100))*100)/100;
+    af=`${atividades} pts (≥200) → R$${av.toFixed(2)} progressivo`;
   }
   sub+=av;row('Atividades Extras',av,af);
 
-  // PROPORCIONAL
-  const bruto=sub;sub=Math.round(sub*prop*100)/100;
-  if(prop<1)row(`Proporcional ${diasTrab}/${diasUteis} dias`,sub-bruto,`× ${prop.toFixed(4)}`,'adj');
+
+  // OVERRIDES MANUAIS (substituem o valor da métrica, não somam por fora)
+  if(a.overrideNota!==null){const i=rows.findIndex(r=>r.l==='Nota de Satisfação');if(i>-1){rows[i].v=a.overrideNota;rows[i].f='Ajuste manual';}}
+  if(a.overrideVolume!==null){const i=rows.findIndex(r=>r.l==='Volume');if(i>-1){rows[i].v=a.overrideVolume;rows[i].f='Ajuste manual';}}
+  if(a.overrideDemandas!==null&&!isInfra){const i=rows.findIndex(r=>r.l==='Demandas Indevidas');if(i>-1){rows[i].v=a.overrideDemandas;rows[i].f='Ajuste manual';}}
+  if(a.overrideAtividades!==null){const i=rows.findIndex(r=>r.l==='Atividades Extras');if(i>-1){rows[i].v=a.overrideAtividades;rows[i].f='Ajuste manual';}}
+  sub=Math.round(rows.reduce((acc,r)=>acc+(Number(r.v)||0),0)*100)/100;
 
   // ADICIONAIS
-  if(metaTME){sub+=50;row('Meta TME zero',50,'+R$50','bon');}
+  if(metaTME&&!isInfra){sub+=50;row('Meta TME zero',50,'+R$50','bon');}
   if(madrinha){sub+=50;row('Madrinha / Padrinho',50,'+R$50','bon');}
   if(reconhece){sub+=50;row('Reconhecimento nota 10',50,'+R$50','bon');}
   if(upgrades>0){const u=upgrades*150;sub+=u;row(`Upgrades WEB ×${upgrades}`,u,`R$150/un = R$${u}`,'bon');}
@@ -935,6 +963,7 @@ function getFormData(){
   return{
     equipe:eq,
     nota:gf('f-nota'),volume:gi('f-vol'),
+    avalPct:gfn('f-avp'),avalTeam:gfn('f-avm'),
     metaVol:metaVol,  // pre-calculated meta for this agent
     vtGrp,nagGrp,     // stored for display in preview
     demandas:demRaw===''?0:Math.max(0,parseInt(demRaw)||0),
@@ -944,6 +973,10 @@ function getFormData(){
     upgrades:gi('f-up'),
     extra:gfn('f-extra'),equipeExtra:gfn('f-equipe-extra'),
     diarias:gi('f-dia'),
+    overrideNota:document.getElementById('f-ov-nota')?.value===''?null:gf('f-ov-nota'),
+    overrideVolume:document.getElementById('f-ov-vol')?.value===''?null:gf('f-ov-vol'),
+    overrideDemandas:document.getElementById('f-ov-dem')?.value===''?null:gf('f-ov-dem'),
+    overrideAtividades:document.getElementById('f-ov-ati')?.value===''?null:gf('f-ov-ati'),
     obs:gv('f-obs'),
   };
 }
@@ -966,7 +999,11 @@ function calc(){
 
   const nota=gf('f-nota');
   const hn=document.getElementById('h-nota');
-  if(nota){const f=nota>=9.85?'≥9,85 → R$180':nota>=9.7?'≥9,7 → R$144':nota>=9.2?'≥9,2 → R$108':'<9,2 → R$0';const cls=nota>=9.2?'hok':'herr';hn.textContent=f;hn.className='hint '+cls;}
+  if(nota){const f=nota>=9.85?'≥9,85 → base R$180':nota>=9.7?'≥9,7 → base R$144':nota>=9.2?'≥9,2 → base R$108':'<9,2 → base R$0';const cls=nota>=9.2?'hok':'herr';hn.textContent=f;hn.className='hint '+cls;}
+  const avp=gfn('f-avp'),avm=Math.max(45,gfn('f-avm'));
+  const havp=document.getElementById('h-avp'); const havm=document.getElementById('h-avm');
+  if(havm){havm.textContent=`Referência registrada: ${avm.toFixed(1)}%`;havm.className='hint hmut';}
+  if(havp&&avp){havp.textContent=`% avaliado informado: ${avp.toFixed(1)}%`;havp.className='hint hmut';}
 
   // Volume hint: shows calculated meta for this agent
   const vol=gi('f-vol');
@@ -989,7 +1026,7 @@ function calc(){
     const metaProp=Math.round(metaIntegral/du*(dt||du)*10)/10;
     const pct=metaProp>0?Math.round(vol/metaProp*100):0;
     hv.textContent=`Meta: ${metaProp} → você tem ${vol} (${pct}%)`;
-    hv.className='hint '+(pct>=100?'hok':pct>=80?'hwarn':'herr');
+    hv.className='hint '+(pct>=90?'hok':pct>=80?'hwarn':'herr');
   } else if(vol>0&&!(vtH>0&&nagRaw>0)){
     hv.textContent='Preencha Volume do grupo e Nº de agentes para ver a meta';
     hv.className='hint hwarn';
@@ -1003,9 +1040,9 @@ function calc(){
   if(ati>0){
     const mx=a.equipe==='i'?135:90;
     let htext='';
-    if(ati>=200){htext=ati+' pts → R$ '+((ati/200)*mx).toFixed(2)+' (progressivo)';}
-    else if(ati>=150){const p=0.8+((ati-150)/50)*0.2;htext=ati+' pts → '+(p*100).toFixed(1)+'% = R$ '+(p*mx).toFixed(2);}
-    else if(ati>=100){const p=0.6+((ati-100)/50)*0.2;htext=ati+' pts → '+(p*100).toFixed(1)+'% = R$ '+(p*mx).toFixed(2);}
+    if(ati>=200){htext=ati+' pts → R$ '+(mx+((ati-200)*(0.2*mx)/100)).toFixed(2)+' (progressivo)';}
+    else if(ati>=150){htext=ati+' pts → R$ '+mx.toFixed(2)+' fixo';}
+    else if(ati>=100){htext=ati+' pts → R$ '+(mx*0.6).toFixed(2)+' fixo';}
     else{htext=ati+' pts < 100 → R$0';}
     ha.textContent=htext;ha.className='hint hmut';
   }
@@ -1013,6 +1050,15 @@ function calc(){
   const up=gi('f-up');if(up>0){document.getElementById('h-up').textContent=`${up} × R$150 = R$${up*150}`;document.getElementById('h-up').className='hint hok';}
 
   const ex=gfn('f-extra');if(ex>0){document.getElementById('h-extra').textContent=`R$${ex.toFixed(2)} extras gerais`;document.getElementById('h-extra').className='hint hmut';}
+
+
+  // Regras específicas Infra
+  const isInfraUI=(a.equipe==='i');
+  const demEl=document.getElementById('f-dem');
+  if(demEl){demEl.disabled=isInfraUI;if(isInfraUI){demEl.value='';const hd=document.getElementById('h-dem');if(hd){hd.textContent='Infra: não aplica demandas indevidas';hd.className='hint hmut';}}}
+  const cbTme=document.getElementById('cb0');
+  const ckTme=document.getElementById('ci0');
+  if(cbTme){cbTme.disabled=isInfraUI;if(isInfraUI){cbTme.checked=false;ckTme?.classList.remove('on');const h=document.getElementById('h-up');if(h&&h.textContent==='Meta TME zero'){h.textContent='';}}}
 
   warn.textContent='';
   if(!a.equipe&&!a.nota&&!a.volume&&!a.atividades){body.innerHTML='<div class="prev-empty">Preencha os campos para validar o impacto financeiro.</div>';return;}
@@ -1044,6 +1090,8 @@ function syncMes(){
   const mes=gv('f-mes');
   document.getElementById('cur-mes-lbl').textContent=ML(mes);
   document.getElementById('hdr-mes').textContent=ML(mes)||'—';
+  const avm=document.getElementById('f-avm');
+  if(avm&&mes&&DB.months[mes]?.avgAval){avm.value=DB.months[mes].avgAval;}
   renderCurList();
 }
 
@@ -1067,6 +1115,7 @@ function saveAg(){
   const{rows,total}=calcBonus(a);
   a.total=total;a.breakdown=rows;a.equipe=fd.equipe||getEq(nome);
   if(!DB.months[mes])DB.months[mes]={agents:[],total:0};
+  if(fd.avalTeam>0)DB.months[mes].avgAval=fd.avalTeam;
   DB.months[mes].agents.push(a);
   DB.months[mes].total=Math.round(DB.months[mes].agents.reduce((s,x)=>s+x.total,0)*100)/100;
   save();toast(`${nome} salvo — ${R(total)}`);
@@ -1074,10 +1123,11 @@ function saveAg(){
 }
 
 function clrFields(){
-  ['f-nota','f-vol','f-dem','f-ati','f-dt','f-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nota','f-vol','f-dem','f-ati','f-dt','f-obs','f-avp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   // Note: f-du, f-vt-sup, f-vt-inf, f-nag-sup, f-nag-inf are month-level — keep them across agents
   ['f-up','f-dia'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   ['f-extra','f-equipe-extra'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
+  ['f-ov-nota','f-ov-vol','f-ov-dem','f-ov-ati'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['cb0','cb1','cb2'].forEach(id=>{const el=document.getElementById(id);if(el){el.checked=false;el.closest('.ck').classList.remove('on');}});
   document.getElementById('f-nome').value='';
   document.getElementById('f-equipe').value='';
@@ -1104,6 +1154,8 @@ function editAg(mes,id){
   document.getElementById('f-equipe').value=a.equipe||getEq(a.nome)||'';
   document.getElementById('f-nota').value=a.nota||'';
   document.getElementById('f-vol').value=a.volume||'';
+  document.getElementById('f-avp').value=a.avalPct||'';
+  document.getElementById('f-avm').value=a.avalTeam||'';
   document.getElementById('f-dem').value=a.demandas!=null?a.demandas:'';
   document.getElementById('f-ati').value=a.atividades||'';
   document.getElementById('f-dt').value=a.diasTrab||'';
@@ -1116,6 +1168,10 @@ function editAg(mes,id){
   document.getElementById('f-extra').value=a.extra||0;
   document.getElementById('f-equipe-extra').value=a.equipeExtra||0;
   document.getElementById('f-dia').value=a.diarias||0;
+  document.getElementById('f-ov-nota').value=a.overrideNota??'';
+  document.getElementById('f-ov-vol').value=a.overrideVolume??'';
+  document.getElementById('f-ov-dem').value=a.overrideDemandas??'';
+  document.getElementById('f-ov-ati').value=a.overrideAtividades??'';
   document.getElementById('f-obs').value=a.obs||'';
   ['cb0','cb1','cb2'].forEach((cbId,i)=>{const props=['metaTME','madrinha','reconhece'];const el=document.getElementById(cbId);el.checked=!!a[props[i]];el.closest('.ck').classList.toggle('on',!!a[props[i]]);});
   DB.months[mes].agents=DB.months[mes].agents.filter(x=>x.id!==id);
@@ -1290,6 +1346,15 @@ function renderExec(){
   if(m.diverge&&m.note)alHTML+=`<div class="alert warn"><div class="a-icon">📝</div><div class="a-body"><strong>Nota sobre ${ML(mes)}</strong><p>${m.note}</p></div></div>`;
   document.getElementById('exec-alerts').innerHTML=alHTML;
 
+  // Discrepancy analysis (rules x totais declarados)
+  const disc=[];
+  ms.forEach(mesIt=>{const v=validate(mesIt);const md=DB.months[mesIt];if(!v)return;const hasDiff=v.declared&&v.diff>=0.01;const flagged=!!md?.diverge;if(hasDiff||flagged){disc.push({mes:mesIt,diff:v.diff,computed:v.computed,declared:v.declared,note:md?.note||'',flagged});}});
+  disc.sort((a,b)=>b.mes.localeCompare(a.mes));
+  const dbox=document.getElementById('exec-disc');
+  document.getElementById('disc-count').textContent=`${disc.length} ${disc.length===1?'item':'itens'}`;
+  if(!disc.length)dbox.innerHTML='<div class="prev-empty">Nenhuma divergência relevante encontrada entre regra e total declarado.</div>';
+  else dbox.innerHTML=disc.slice(0,6).map(d=>`<div class="ins ${d.diff>0.01?'red':'amber'}"><div class="ins-icon">${d.diff>0.01?'🧮':'📝'}</div><div class="ins-body"><strong>${ML(d.mes)} • diferença ${R(d.diff)}</strong><p>Calculado: ${R(d.computed)} | Declarado: ${d.declared?R(d.declared):'—'}${d.note?` — ${d.note}`:''}</p><p style="margin-top:6px"><button class="btn bs bsm" onclick="openConsideration('${d.mes}')">✍️ Consideração / ajuste</button></p></div></div>`).join('');
+
   // Validation
   if(val){
     const ok=`<span class="badge bok">✓ OK</span>`;const wr=`<span class="badge bwarn">⚠</span>`;const er=`<span class="badge berr">✕</span>`;
@@ -1300,6 +1365,24 @@ function renderExec(){
       <div class="vr"><span class="vl">Colaboradores</span><div class="vright"><span class="vnum">${val.n}</span>${ok}</div></div>
       <div class="vr"><span class="vl">Reprodução + Engorda + Infra</span><div class="vright"><span style="font-size:11px;color:var(--ink4)">${R(val.tms.r)} + ${R(val.tms.e)} + ${R(val.tms.i)} = ${R(val.teamSum)}</span>${Math.abs(val.teamSum-val.computed)<0.1?ok:wr}</div></div>`;
   } else document.getElementById('exec-val').innerHTML='<div class="prev-empty">Sem dados para validar.</div>';
+}
+
+
+function openConsideration(mes){
+  const m=DB.months[mes];if(!m)return;
+  const val=validate(mes);
+  const atual=(m.note||'').trim();
+  const nova=prompt(`Consideração para ${ML(mes)}:`,atual||'');
+  if(nova===null)return;
+  m.note=nova.trim();
+  m.diverge=!!m.note;
+  if(val&&val.declared){
+    const sync=confirm(`Deseja ajustar o total declarado de ${ML(mes)} para o valor calculado (${R(val.computed)})?`);
+    if(sync)m.total=Math.round(val.computed*100)/100;
+  }
+  save();
+  renderAll();
+  toast('Consideração atualizada com sucesso.');
 }
 
 // ════════════════════════════════════════════════════
@@ -1423,8 +1506,8 @@ function togManual(id){document.getElementById(id).classList.toggle('open');}
 // ════════════════════════════════════════════════════
 // PDF
 // ════════════════════════════════════════════════════
-function gerarPDF(){
-  const mes=gv('sel-exec')||gv('sel-exp')||months().pop();
+function gerarPDF(origem='auto'){
+  const mes=origem==='exp'?(gv('sel-exp')||gv('sel-exec')||months().pop()):origem==='exec'?(gv('sel-exec')||gv('sel-exp')||months().pop()):(gv('sel-exp')||gv('sel-exec')||months().pop());
   if(!mes||!DB.months[mes]){toast('Selecione um mês para gerar o PDF.',true);return;}
   const m=DB.months[mes];
   const ags=[...m.agents].sort((a,b)=>b.total-a.total);
@@ -1642,7 +1725,29 @@ function clrAll(){
   DB={months:JSON.parse(JSON.stringify(SEED))};save();renderAll();toast('Histórico restaurado.');
 }
 
-function renderAll(){updSels();renderExec();renderHist();}
+
+function dedupeEvalFields(){
+  ['f-avp','f-avm','h-avp','h-avm'].forEach(id=>{
+    const els=document.querySelectorAll('#'+id);
+    if(els.length>1){for(let i=1;i<els.length;i++)els[i].closest('.fg')?.remove();}
+  });
+  // força % tickets avaliados apenas em Métricas de Performance
+  const avp=document.getElementById('f-avp');
+  const metrics=document.querySelector('#pg-lancar .fcard:nth-of-type(3) .g4');
+  if(avp&&metrics){
+    const fg=avp.closest('.fg');
+    if(fg&&!metrics.contains(fg)){
+      const notaFg=metrics.querySelector('.fg');
+      if(notaFg&&notaFg.nextSibling)metrics.insertBefore(fg,notaFg.nextSibling);
+      else metrics.appendChild(fg);
+    }
+  }
+  // remove qualquer campo órfão com placeholder Ex:42 na seção individual
+  const indiv=document.querySelectorAll('#pg-lancar .fcard')[1];
+  if(indiv){indiv.querySelectorAll('input[placeholder="Ex: 42"]').forEach(el=>{if(el.id!=='f-avp')el.closest('.fg')?.remove();});}
+}
+
+function renderAll(){dedupeEvalFields();updSels();renderExec();renderHist();}
 
 // ════════════════════════════════════════════════════
 // INIT
