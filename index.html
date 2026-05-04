@@ -878,7 +878,7 @@ function calcBonus(a){
   sub=Math.round(rows.reduce((acc,r)=>acc+(Number(r.v)||0),0)*100)/100;
 
   // ADICIONAIS
-  if(metaTME){sub+=50;row('Meta TME zero',50,'+R$50','bon');}
+  if(metaTME&&!isInfra){sub+=50;row('Meta TME zero',50,'+R$50','bon');}
   if(madrinha){sub+=50;row('Madrinha / Padrinho',50,'+R$50','bon');}
   if(reconhece){sub+=50;row('Reconhecimento nota 10',50,'+R$50','bon');}
   if(upgrades>0){const u=upgrades*150;sub+=u;row(`Upgrades WEB ×${upgrades}`,u,`R$150/un = R$${u}`,'bon');}
@@ -1055,6 +1055,15 @@ function calc(){
   const up=gi('f-up');if(up>0){document.getElementById('h-up').textContent=`${up} × R$150 = R$${up*150}`;document.getElementById('h-up').className='hint hok';}
 
   const ex=gfn('f-extra');if(ex>0){document.getElementById('h-extra').textContent=`R$${ex.toFixed(2)} extras gerais`;document.getElementById('h-extra').className='hint hmut';}
+
+
+  // Regras específicas Infra
+  const isInfraUI=(a.equipe==='i');
+  const demEl=document.getElementById('f-dem');
+  if(demEl){demEl.disabled=isInfraUI;if(isInfraUI){demEl.value='';const hd=document.getElementById('h-dem');if(hd){hd.textContent='Infra: não aplica demandas indevidas';hd.className='hint hmut';}}}
+  const cbTme=document.getElementById('cb0');
+  const ckTme=document.getElementById('ci0');
+  if(cbTme){cbTme.disabled=isInfraUI;if(isInfraUI){cbTme.checked=false;ckTme?.classList.remove('on');const h=document.getElementById('h-up');if(h&&h.textContent==='Meta TME zero'){h.textContent='';}}}
 
   warn.textContent='';
   if(!a.equipe&&!a.nota&&!a.volume&&!a.atividades){body.innerHTML='<div class="prev-empty">Preencha os campos para validar o impacto financeiro.</div>';return;}
