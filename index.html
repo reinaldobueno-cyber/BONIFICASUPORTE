@@ -824,19 +824,12 @@ function calcBonus(a){
   const rows=[];let sub=0;
   const row=(l,v,f,t)=>rows.push({l,v,f:f||'',t:t||'n'});
 
-  // NOTA + GATE DE VOLUME DE AVALIAÇÕES
-  let nvBase=0,nf='';
-  if(nota>=9.85){nvBase=180;nf='≥ 9,85 → base R$180';}
-  else if(nota>=9.7){nvBase=144;nf='≥ 9,70 → base R$144';}
-  else if(nota>=9.2){nvBase=108;nf='≥ 9,20 → base R$108';}
-  else{nvBase=0;nf='< 9,20 → base R$0';}
-  const refAval=Math.max(45,Number(a.avalTeam)||0);
-  const pctAval=Number(a.avalPct)||0;
-  let fatorAval=1,faixaAval='≥ média';
-  if(pctAval<35){fatorAval=0;faixaAval='<35%';}
-  else if(pctAval<refAval){fatorAval=0.5;faixaAval=`35%–${refAval.toFixed(1)}%`; }
-  const nv=Math.round(nvBase*fatorAval*100)/100;
-  nf+=` | Avaliações ${pctAval.toFixed(1)}% (${faixaAval}) → ${fatorAval===1?'100%':fatorAval===0.5?'50%':'0%'} da nota`;
+  // NOTA (regra oficial da planilha)
+  let nv=0,nf='';
+  if(nota>=9.85){nv=180;nf='≥ 9,85 → R$180';}
+  else if(nota>=9.7){nv=144;nf='≥ 9,70 → R$144';}
+  else if(nota>=9.2){nv=108;nf='≥ 9,20 → R$108';}
+  else{nv=0;nf='< 9,20 → R$0';}
   sub+=nv;row('Nota de Satisfação',nv,nf);
 
   // VOLUME — meta = (vol_grupo / n_agentes / dias_uteis) * dias_trabalhados
@@ -1019,8 +1012,8 @@ function calc(){
   if(nota){const f=nota>=9.85?'≥9,85 → base R$180':nota>=9.7?'≥9,7 → base R$144':nota>=9.2?'≥9,2 → base R$108':'<9,2 → base R$0';const cls=nota>=9.2?'hok':'herr';hn.textContent=f;hn.className='hint '+cls;}
   const avp=gfn('f-avp'),avm=Math.max(45,gfn('f-avm'));
   const havp=document.getElementById('h-avp'); const havm=document.getElementById('h-avm');
-  if(havm) {havm.textContent=`Referência aplicada: ${avm.toFixed(1)}%`; havm.className='hint hmut';}
-  if(havp&&avp){havp.textContent=avp<35?'<35%: zera nota':avp<avm?`Entre 35% e ${avm.toFixed(1)}%: 50% da nota`:'≥ média: 100% da nota';havp.className='hint '+(avp<35?'herr':avp<avm?'hwarn':'hok');}
+  if(havm){havm.textContent=`Referência registrada: ${avm.toFixed(1)}%`;havm.className='hint hmut';}
+  if(havp&&avp){havp.textContent=`% avaliado informado: ${avp.toFixed(1)}%`;havp.className='hint hmut';}
 
   // Volume hint: shows calculated meta for this agent
   const vol=gi('f-vol');
