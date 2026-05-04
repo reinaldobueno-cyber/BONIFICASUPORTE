@@ -1721,7 +1721,15 @@ function clrAll(){
   DB={months:JSON.parse(JSON.stringify(SEED))};save();renderAll();toast('Histórico restaurado.');
 }
 
-function renderAll(){updSels();renderExec();renderHist();}
+
+function dedupeEvalFields(){
+  ['f-avp','f-avm','h-avp','h-avm'].forEach(id=>{
+    const els=document.querySelectorAll('#'+id);
+    if(els.length>1){for(let i=1;i<els.length;i++)els[i].closest('.fg')?.remove();}
+  });
+}
+
+function renderAll(){dedupeEvalFields();updSels();renderExec();renderHist();}
 
 // ════════════════════════════════════════════════════
 // INIT
