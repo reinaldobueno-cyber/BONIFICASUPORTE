@@ -1752,7 +1752,13 @@ function dedupeEvalFields(){
   if(indiv){indiv.querySelectorAll('input[placeholder="Ex: 42"]').forEach(el=>{if(el.id!=='f-avp')el.closest('.fg')?.remove();});}
 }
 
-function renderAll(){dedupeEvalFields();updSels();renderExec();renderHist();}
+
+function normalizeNotaRuleText(){
+  const tip=document.getElementById('tip-nota');
+  if(tip)tip.innerHTML='<strong>Nota de Satisfação</strong><span class="tag ttf">Fixo 40%</span><br>Média das avaliações dos clientes atendidos. Indicador individual.<ul><li>≥ 9,85 → 100% = R$180</li><li>≥ 9,70 → 80% = R$144</li><li>≥ 9,20 → 60% = R$108</li><li>< 9,20 → 0%</li></ul><em>Exemplo: 9,92 → faixa ≥9,85 → R$180,00</em>';
+}
+
+function renderAll(){dedupeEvalFields();normalizeNotaRuleText();updSels();renderExec();renderHist();}
 
 // ════════════════════════════════════════════════════
 // INIT
